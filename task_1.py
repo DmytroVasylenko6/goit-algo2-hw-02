@@ -1,5 +1,5 @@
-from typing import List, Dict
 from dataclasses import dataclass
+from typing import Dict, List
 
 
 @dataclass
@@ -27,9 +27,64 @@ def optimize_printing(print_jobs: List[Dict], constraints: Dict) -> Dict:
     Returns:
         Dict з порядком друку та загальним часом
     """
-    # Тут повинен бути ваш код
+    print("\nПочаток оптимізації друку:")
+    print(f"Отримано {len(print_jobs)} завдань")
+    print(
+        f"Обмеження принтера: максимальний об'єм = {constraints['max_volume']}, максимум предметів = {constraints['max_items']}"
+    )
 
-    return {"print_order": None, "total_time": None}
+    jobs = [PrintJob(**job) for job in print_jobs]
+    printer_constraints = PrinterConstraints(**constraints)
+
+    jobs.sort(key=lambda x: x.priority)
+    print("\nЗавдання відсортовані за пріоритетом:")
+    for job in jobs:
+        print(
+            f"ID: {job.id}, Пріоритет: {job.priority}, Об'єм: {job.volume}, Час друку: {job.print_time}"
+        )
+
+    print_groups = []
+    current_group = []
+    current_volume = 0
+    total_time = 0
+
+    print("\nФормування груп для друку:")
+    for job in jobs:
+        print(f"\nОбробка завдання {job.id}:")
+        if (
+            current_volume + job.volume <= printer_constraints.max_volume
+            and len(current_group) < printer_constraints.max_items
+        ):
+            current_group.append(job)
+            current_volume += job.volume
+            print(f"Додано до поточної групи. Поточний об'єм: {current_volume}")
+        else:
+            print(
+                f"Неможливо додати до поточної групи (об'єм: {current_volume + job.volume}, кількість: {len(current_group) + 1})"
+            )
+            if current_group:
+                print_groups.append(current_group)
+                group_time = max(j.print_time for j in current_group)
+                total_time += group_time
+                print(f"Збережено групу. Час друку групи: {group_time}")
+            current_group = [job]
+            current_volume = job.volume
+            print(f"Створено нову групу з завданням {job.id}")
+
+    if current_group:
+        print_groups.append(current_group)
+        group_time = max(j.print_time for j in current_group)
+        total_time += group_time
+        print(f"\nДодано останню групу. Час друку групи: {group_time}")
+
+    print_order = []
+    print(print_groups)
+    for group in print_groups:
+        print_order.extend([job.id for job in group])
+
+    print("\nРезультат оптимізації:")
+
+    return {"print_order": print_order, "total_time": total_time}
 
 
 # Тестування
@@ -39,6 +94,7 @@ def test_printing_optimization():
         {"id": "M1", "volume": 100, "priority": 1, "print_time": 120},
         {"id": "M2", "volume": 150, "priority": 1, "print_time": 90},
         {"id": "M3", "volume": 120, "priority": 1, "print_time": 150},
+        {"id": "M4", "volume": 220, "priority": 1, "print_time": 250},
     ]
 
     # Тест 2: Моделі різних пріоритетів
@@ -67,12 +123,12 @@ def test_printing_optimization():
     print(f"Порядок друку: {result1['print_order']}")
     print(f"Загальний час: {result1['total_time']} хвилин")
 
-    print("\\nТест 2 (різні пріоритети):")
+    print("\nТест 2 (різні пріоритети):")
     result2 = optimize_printing(test2_jobs, constraints)
     print(f"Порядок друку: {result2['print_order']}")
     print(f"Загальний час: {result2['total_time']} хвилин")
 
-    print("\\nТест 3 (перевищення обмежень):")
+    print("\nТест 3 (перевищення обмежень):")
     result3 = optimize_printing(test3_jobs, constraints)
     print(f"Порядок друку: {result3['print_order']}")
     print(f"Загальний час: {result3['total_time']} хвилин")

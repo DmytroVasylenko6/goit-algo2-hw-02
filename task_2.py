@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 
 def rod_cutting_memo(length: int, prices: List[int]) -> Dict:
@@ -12,10 +12,38 @@ def rod_cutting_memo(length: int, prices: List[int]) -> Dict:
     Returns:
         Dict з максимальним прибутком та списком розрізів
     """
+    memo = {}
+    cuts_memo = {}
 
-    # Тут повинен бути ваш код
+    def cut_rod(n: int) -> int:
+        if n == 0:
+            return 0
+        if n in memo:
+            return memo[n]
 
-    return {"max_profit": None, "cuts": None, "number_of_cuts": None}
+        max_val = float("-inf")
+        best_cut = 0
+
+        for i in range(n):
+            current = prices[i] + cut_rod(n - (i + 1))
+            if current > max_val:
+                max_val = current
+                best_cut = i + 1
+
+        memo[n] = max_val
+        cuts_memo[n] = best_cut
+        return max_val
+
+    max_profit = cut_rod(length)
+
+    cuts = []
+    remaining = length
+    while remaining > 0:
+        cut = cuts_memo[remaining]
+        cuts.append(cut)
+        remaining -= cut
+
+    return {"max_profit": max_profit, "cuts": cuts, "number_of_cuts": len(cuts) - 1}
 
 
 def rod_cutting_table(length: int, prices: List[int]) -> Dict:
@@ -29,10 +57,31 @@ def rod_cutting_table(length: int, prices: List[int]) -> Dict:
     Returns:
         Dict з максимальним прибутком та списком розрізів
     """
+    table = [0] * (length + 1)
 
-    # Тут повинен бути ваш код
+    cuts = [0] * (length + 1)
 
-    return {"max_profit": None, "cuts": None, "number_of_cuts": None}
+    for i in range(1, length + 1):
+        max_val = float("-inf")
+        for j in range(i):
+            current = prices[j] + table[i - (j + 1)]
+            if current > max_val:
+                max_val = current
+                cuts[i] = j + 1
+        table[i] = max_val
+
+    result_cuts = []
+    remaining = length
+    while remaining > 0:
+        cut = cuts[remaining]
+        result_cuts.append(cut)
+        remaining -= cut
+    print(" table:", table)
+    return {
+        "max_profit": table[length],
+        "cuts": result_cuts,
+        "number_of_cuts": len(result_cuts) - 1,
+    }
 
 
 def run_tests():
@@ -47,25 +96,25 @@ def run_tests():
     ]
 
     for test in test_cases:
-        print(f"\\nТест: {test['name']}")
+        print(f"\nТест: {test['name']}")
         print(f"Довжина стрижня: {test['length']}")
         print(f"Ціни: {test['prices']}")
 
         # Тестуємо мемоізацію
         memo_result = rod_cutting_memo(test["length"], test["prices"])
-        print("\\nРезультат мемоізації:")
+        print("\nРезультат мемоізації:")
         print(f"Максимальний прибуток: {memo_result['max_profit']}")
         print(f"Розрізи: {memo_result['cuts']}")
         print(f"Кількість розрізів: {memo_result['number_of_cuts']}")
 
         # Тестуємо табуляцію
         table_result = rod_cutting_table(test["length"], test["prices"])
-        print("\\nРезультат табуляції:")
+        print("\nРезультат табуляції:")
         print(f"Максимальний прибуток: {table_result['max_profit']}")
         print(f"Розрізи: {table_result['cuts']}")
         print(f"Кількість розрізів: {table_result['number_of_cuts']}")
 
-        print("\\nПеревірка пройшла успішно!")
+        print("\nПеревірка пройшла успішно!")
 
 
 if __name__ == "__main__":
